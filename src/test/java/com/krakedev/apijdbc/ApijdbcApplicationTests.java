@@ -1,4 +1,4 @@
-package com.krake.apijdbc;
+package com.krakedev.apijdbc;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
