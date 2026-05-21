@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <!-- =========================================================== -->
+    <!-- Propiedades globales                                         -->
+    <!-- =========================================================== -->
+    <property name="APP_NAME"  value="mi-aplicacion" />
+    <property name="LOG_PATH"  value="logs" />
+    <property name="LOG_FILE"  value="${LOG_PATH}/${APP_NAME}" />
+
+    <!-- Patrón para consola (con colores ANSI) -->
+    <property name="CONSOLE_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%cyan(%thread)] %yellow(%logger{36}) - %msg%n" />
+
+    <!-- Patrón para archivo (sin colores) -->
+    <property name="FILE_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n" />
+
+    <!-- =========================================================== -->
+    <!-- Appender: Consola                                            -->
+    <!-- =========================================================== -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- =========================================================== -->
+    <!-- Appender: Archivo con rotación diaria                        -->
+    <!-- =========================================================== -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}.log</file>
+        <encoder>
+            <pattern>${FILE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Rota cada día y comprime -->
+            <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy
+                    class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <!-- Máximo 50 MB por archivo antes de rotar -->
+                <maxFileSize>50MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <!-- Conservar logs de los últimos 30 días -->
+            <maxHistory>30</maxHistory>
+            <!-- Límite total de espacio en disco -->
+            <totalSizeCap>2GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- =========================================================== -->
+    <!-- Appender: Archivo exclusivo para errores                     -->
+    <!-- =========================================================== -->
+    <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/error.log</file>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <encoder>
+            <pattern>${FILE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/error.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy
+                    class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>20MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>90</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- =========================================================== -->
+    <!-- Appender asíncrono (envuelve FILE para mejor rendimiento)    -->
+    <!-- =========================================================== -->
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FILE" />
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+    </appender>
+
+    <!-- =========================================================== -->
+    <!-- Niveles por paquete / librería                               -->
+    <!-- =========================================================== -->
+
+    <!-- Tu código fuente: DEBUG en desarrollo -->
+    <logger name="com.tuempresa.tuapp" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="ASYNC_FILE" />
+        <appender-ref ref="FILE_ERROR" />
+    </logger>
+
+    <!-- Spring Framework: INFO para reducir ruido -->
+    <logger name="org.springframework"          level="INFO" />
+    <logger name="org.springframework.web"      level="INFO" />
+    <logger name="org.springframework.security" level="WARN" />
+
+    <!-- Hibernate / JPA -->
+    <logger name="org.hibernate"                        level="WARN" />
+    <!-- Mostrar SQL generado (útil en desarrollo, deshabilitar en producción) -->
+    <logger name="org.hibernate.SQL"                    level="DEBUG" />
+    <logger name="org.hibernate.orm.jdbc.bind"          level="TRACE" />
+
+    <!-- HikariCP (pool de conexiones) -->
+    <logger name="com.zaxxer.hikari" level="INFO" />
+
+    <!-- Flyway / Liquibase -->
+    <logger name="org.flywaydb"   level="INFO" />
+    <logger name="liquibase"      level="INFO" />
+
+    <!-- Kafka (si aplica) -->
+    <logger name="org.apache.kafka" level="WARN" />
+
+    <!-- =========================================================== -->
+    <!-- Root logger                                                  -->
+    <!-- =========================================================== -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="ASYNC_FILE" />
+        <appender-ref ref="FILE_ERROR" />
+    </root>
+
+</configuration>
